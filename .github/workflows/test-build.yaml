@@ -17,3 +17,6 @@ jobs:
 
     - name: Run Tests
       run: ./scripts/test-build.sh 2>&1
+
+    - name: Run Unit Tests
+      run: ./scripts/test-unit.sh 2>&1
