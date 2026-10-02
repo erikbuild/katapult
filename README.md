@@ -77,6 +77,20 @@ command could be used. You could also use the mass storage device drag-and-drop
 method to flash `katapult.uf2` from the `out` folder. Flashing Katapult will erase
 the main application (i.e. klipper), so it should be uploaded with Katapult again.
 
+### STM32C5
+
+A blank STM32C551/C552 starts ST's ROM bootloader, which offers USB
+DFU on PA11/PA12 without an external crystal. Flash Katapult with:
+
+`dfu-util -d 0483:df11 -R -a 0 -s 0x08000000:leave -D out/katapult.bin`
+
+The chip remembers that its flash was empty until the next power
+cycle; Katapult clears that flag at startup so later resets boot
+Katapult. With the factory option bytes the BOOT0 pin is ignored;
+using it requires programming the BOOT_SEL option bit with an ST
+tool. Flash pages are 8KiB, so the application offset is 8KiB or
+16KiB.
+
 ## Uploading Klipper
 1) Make sure the `klipper` service stopped.
 2) Build Klipper with CAN support and with the a bootloader offset matching that
