@@ -136,7 +136,8 @@ erase_page(uint32_t page_address)
     // Pages are numbered within each of the two equal physical banks
     uint16_t *flash_size = (void*)FLASHSIZE_BASE;
     uint32_t bank_size = *flash_size * 1024 / 2;
-    int swapped = !!(FLASH->OPTSR_CUR & FLASH_OPTSR_CUR_SWAP_BANK);
+    // OPTCR holds the bank swap in effect; OPTSR_CUR may hold a pending one
+    int swapped = !!(FLASH->OPTCR & FLASH_OPTCR_SWAP_BANK);
     struct flash_bank_page bp = flash_bank_page_lookup(
         page_address - CONFIG_FLASH_START, bank_size, 8 * 1024, swapped);
     uint32_t cr = (FLASH_CR_PER | (bp.page << FLASH_CR_PNB_Pos)
