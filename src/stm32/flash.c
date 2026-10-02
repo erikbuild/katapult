@@ -215,6 +215,13 @@ flash_write_block(uint32_t block_address, uint32_t *data)
     if (block_address & (CONFIG_BLOCK_SIZE - 1))
         // Not a block aligned address
         return -1;
+#if CONFIG_MACH_STM32C5
+    // The SINGLE_BANK option places all user flash in one bank, and RM0522
+    // does not describe the erase page numbering for that layout, so refuse
+    // to write rather than risk erasing the wrong page
+    if (FLASH->OPTSR_CUR & FLASH_OPTSR_CUR_SINGLE_BANK)
+        return -4;
+#endif
     uint32_t flash_page_size = flash_get_page_size(block_address);
     uint32_t page_address = ALIGN_DOWN(block_address, flash_page_size);
 
