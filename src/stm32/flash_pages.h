@@ -1,7 +1,7 @@
 // ABOUTME: Page-level helpers for the stm32 flash driver: locate a page in
 // ABOUTME: dual-bank flash and check whether a flash range is erased.
 //
-// Copyright (C) 2026  Erik Reynolds <erik@hartunions.com>
+// Copyright (C) 2026  Erik Reynolds <me@erik.build>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 #ifndef __STM32_FLASH_PAGES_H
