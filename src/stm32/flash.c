@@ -37,6 +37,8 @@ flash_get_page_size(uint32_t addr)
         return 2 * 1024;
     } else if (CONFIG_MACH_STM32H7) {
         return 128 * 1024;
+    } else if (CONFIG_MACH_STM32C5) {
+        return 8 * 1024;
     }
 }
 
@@ -81,6 +83,18 @@ lock_flash(void)
     FLASH->CR = FLASH_CR_LOCK;
 }
 
+// Clear error flags left by an earlier operation; on stm32c5 any flag
+// still set turns the next erase or program into an error
+static void
+clear_flash_errors(void)
+{
+#if CONFIG_MACH_STM32C5
+    FLASH->CCR = (FLASH_CCR_CLR_EOP | FLASH_CCR_CLR_WRPERR
+                  | FLASH_CCR_CLR_PGSERR | FLASH_CCR_CLR_STRBERR
+                  | FLASH_CCR_CLR_INCERR | FLASH_CCR_CLR_OPTCHANGEERR);
+#endif
+}
+
 // Issue a low-level flash hardware erase request for a flash page
 static void
 erase_page(uint32_t page_address)
@@ -118,6 +132,17 @@ erase_page(uint32_t page_address)
     while (FLASH->SR & FLASH_SR_QW)
         ;
     SCB_InvalidateDCache_by_Addr((void*)page_address, 128*1024);
+#elif CONFIG_MACH_STM32C5
+    // Pages are numbered within each of the two equal physical banks
+    uint16_t *flash_size = (void*)FLASHSIZE_BASE;
+    uint32_t bank_size = *flash_size * 1024 / 2;
+    int swapped = !!(FLASH->OPTSR_CUR & FLASH_OPTSR_CUR_SWAP_BANK);
+    struct flash_bank_page bp = flash_bank_page_lookup(
+        page_address - CONFIG_FLASH_START, bank_size, 8 * 1024, swapped);
+    uint32_t cr = (FLASH_CR_PER | (bp.page << FLASH_CR_PNB_Pos)
+                   | (bp.bank ? FLASH_CR_BKSEL : 0));
+    FLASH->CR = cr;
+    FLASH->CR = cr | FLASH_CR_STRT;
 #endif
     wait_flash();
 }
@@ -165,6 +190,18 @@ write_block(uint32_t block_address, uint32_t *data)
         wait_flash();
     }
     SCB_InvalidateDCache_by_Addr((void*)block_address, CONFIG_BLOCK_SIZE);
+#elif CONFIG_MACH_STM32C5
+    // Program 128-bit flash words, four 32-bit writes each
+    uint32_t *page = (void*)block_address;
+    FLASH->CR = FLASH_CR_PG;
+    for (int i = 0; i < CONFIG_BLOCK_SIZE / 16; i++) {
+        writel(&page[i*4], data[i*4]);
+        writel(&page[i*4 + 1], data[i*4 + 1]);
+        writel(&page[i*4 + 2], data[i*4 + 2]);
+        writel(&page[i*4 + 3], data[i*4 + 3]);
+        while (FLASH->SR & (FLASH_SR_BSY | FLASH_SR_WBNE | FLASH_SR_DBNE))
+            ;
+    }
 #endif
 }
 
@@ -207,6 +244,7 @@ flash_write_block(uint32_t block_address, uint32_t *data)
     }
 
     // make sure flash is unlocked
+    clear_flash_errors();
     unlock_flash();
 
     // Erase page

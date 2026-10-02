@@ -83,6 +83,11 @@ The stm32h7 directory contains code from:
 version v1.9.0 (ccb11556044540590ca6e45056e6b65cdca2deb2). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
 
+The stm32c5 directory contains code from:
+  https://github.com/STMicroelectronics/stm32c5xx-dfp
+version 2.1.0 (a5f65bc64535cfa723e9d25f58d7ce23d0937aed). Contents
+taken from the Include/ directory.
+
 The pico-sdk directory contains code from the pico sdk:
   https://github.com/raspberrypi/pico-sdk.git
 version 2.0.0 (efe2103f9b28458a1615ff096054479743ade236). It has been
