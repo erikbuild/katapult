@@ -26,10 +26,17 @@ usbserial_get_serialid(void)
 void
 chipid_init(void)
 {
+    // Copy the id with 32-bit reads; some chips (stm32c5) fault on
+    // byte reads of the area holding the unique id
+    uint32_t uid[CHIP_UID_LEN / 4];
+    const volatile uint32_t *uid_reg = (void*)UID_BASE;
+    int i;
+    for (i = 0; i < ARRAY_SIZE(uid); i++)
+        uid[i] = uid_reg[i];
+
     if (CONFIG_USB_SERIAL_NUMBER_CHIPID)
-        usb_fill_serial(&cdc_chipid.desc, ARRAY_SIZE(cdc_chipid.data)
-                        , (void*)UID_BASE);
+        usb_fill_serial(&cdc_chipid.desc, ARRAY_SIZE(cdc_chipid.data), uid);
     if (CONFIG_CANBUS)
-        canserial_set_uuid((void*)UID_BASE, CHIP_UID_LEN);
+        canserial_set_uuid((uint8_t *)uid, CHIP_UID_LEN);
 }
 DECL_INIT(chipid_init);

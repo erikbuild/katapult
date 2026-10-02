@@ -84,6 +84,12 @@ choice
     config MACH_STM32H750
         bool "STM32H750"
         select MACH_STM32H7
+    config MACH_STM32C551
+        bool "STM32C551"
+        select MACH_STM32C5
+    config MACH_STM32C552
+        bool "STM32C552"
+        select MACH_STM32C5
     config MACH_STM32L412
         bool "STM32L412" if 0
         select MACH_STM32L4
@@ -114,6 +120,8 @@ config MACH_STM32F0x2 # F042, F072 series
 config MACH_STM32F4x5 # F405, F407, F429 series
     bool
 config MACH_STM32L4
+    bool
+config MACH_STM32C5
     bool
 config HAVE_STM32_USBFS
     bool
@@ -151,6 +159,8 @@ config MCU
     default "stm32h743xx" if MACH_STM32H743
     default "stm32h750xx" if MACH_STM32H750
     default "stm32l412xx" if MACH_STM32L412
+    default "stm32c551xx" if MACH_STM32C551
+    default "stm32c552xx" if MACH_STM32C552
 
 config CLOCK_FREQ
     int
@@ -166,6 +176,7 @@ config CLOCK_FREQ
     default 400000000 if MACH_STM32H7 && !MACH_STM32H750
     default 480000000 if MACH_STM32H750
     default 80000000 if MACH_STM32L412
+    default 144000000 if MACH_STM32C5
 
 config FLASH_SIZE
     hex
@@ -178,6 +189,7 @@ config FLASH_SIZE
     default 0x20000 if MACH_STM32G0 || MACH_STM32G431
     default 0x20000 if MACH_STM32H750
     default 0x200000 if MACH_STM32H743
+    default 0x40000 if MACH_STM32C5
 
 config FLASH_BOOT_ADDRESS
     hex
@@ -202,6 +214,7 @@ config RAM_SIZE
     default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446
     default 0x24000 if MACH_STM32G0Bx
     default 0x20000 if MACH_STM32H7
+    default 0x20000 if MACH_STM32C5
 
 config STACK_SIZE
     int
@@ -236,7 +249,7 @@ choice
     config STM32_FLASH_START_0000
         bool "Do not build"
     config STM32_FLASH_START_2000
-        bool "8KiB bootloader" if MACH_STM32F103 || MACH_STM32F070 || MACH_STM32G0 || MACH_STM32F0x2 || MACH_STM32G4
+        bool "8KiB bootloader" if MACH_STM32F103 || MACH_STM32F070 || MACH_STM32G0 || MACH_STM32F0x2 || MACH_STM32G4 || MACH_STM32C5
     config STM32_FLASH_START_5000
         bool "20KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_7000
@@ -292,16 +305,20 @@ choice
         bool "8 MHz crystal"
     config STM32_CLOCK_REF_12M
         bool "12 MHz crystal"
+        depends on !MACH_STM32C5
     config STM32_CLOCK_REF_16M
         bool "16 MHz crystal"
     config STM32_CLOCK_REF_20M
         bool "20 MHz crystal"
+        depends on !MACH_STM32C5
     config STM32_CLOCK_REF_24M
         bool "24 MHz crystal"
     config STM32_CLOCK_REF_25M
         bool "25 MHz crystal"
+        depends on !MACH_STM32C5
     config STM32_CLOCK_REF_32M
         bool "32 MHz crystal"
+        depends on !MACH_STM32C5
     config STM32_CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
@@ -362,7 +379,7 @@ choice
         select SERIAL
     config STM32_SERIAL_USART3
         bool "Serial (on USART3 PB11/PB10)" if LOW_LEVEL_OPTIONS
-        depends on !MACH_STM32F0 && !MACH_STM32F401
+        depends on !MACH_STM32F0 && !MACH_STM32F401 && !MACH_STM32C5
         select SERIAL
     config STM32_SERIAL_USART3_ALT_PD9_PD8
         bool "Serial (on USART3 PD9/PD8)" if LOW_LEVEL_OPTIONS
@@ -370,7 +387,7 @@ choice
         select SERIAL
     config STM32_SERIAL_UART4
         bool "Serial (on UART4 PA0/PA1)"
-        depends on MACH_STM32H7
+        depends on MACH_STM32H7 || MACH_STM32C5
         select SERIAL
     config STM32_CANBUS_PA11_PA12
         bool "CAN bus (on PA11/PA12)"
@@ -499,9 +516,9 @@ choice
     config STM32_APP_START_8000
         bool "32KiB offset" if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32H750
     config STM32_APP_START_4000
-        bool "16KiB offset" if MACH_STM32F2 || MACH_STM32F4
+        bool "16KiB offset" if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32C5
     config STM32_APP_START_2000
-        bool "8KiB offset" if MACH_STM32F0 || MACH_STM32F1 || MACH_STM32G0 || MACH_STM32G4
+        bool "8KiB offset" if MACH_STM32F0 || MACH_STM32F1 || MACH_STM32G0 || MACH_STM32G4 || MACH_STM32C5
     config STM32_APP_START_1000
         bool "4KiB offset" if MACH_STM32F0 || MACH_STM32F1 || MACH_STM32G0
 endchoice
