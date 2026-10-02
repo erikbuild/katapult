@@ -8,6 +8,7 @@
 #include "autoconf.h" // CONFIG_MACH_STM32F103
 #include "board/io.h" // writew
 #include "flash.h" // flash_write_block
+#include "flash_pages.h" // flash_range_is_erased
 #include "internal.h" // FLASH
 
 // Return the flash page size at the given address
@@ -37,17 +38,6 @@ flash_get_page_size(uint32_t addr)
     } else if (CONFIG_MACH_STM32H7) {
         return 128 * 1024;
     }
-}
-
-// Check if the data at the given address has been erased (all 0xff)
-static int
-check_erased(uint32_t addr, uint32_t count)
-{
-    uint32_t *p = (void*)addr, *e = (void*)addr + count / 4;
-    while (p < e)
-        if (*p++ != 0xffffffff)
-            return 0;
-    return 1;
 }
 
 // Some chips have slightly different register names
@@ -193,11 +183,13 @@ flash_write_block(uint32_t block_address, uint32_t *data)
     // Check if erase is needed
     int need_erase = 0;
     if (page_address == block_address) {
-        if (check_erased(block_address, flash_page_size)) {
+        if (flash_range_is_erased((void*)block_address, flash_page_size)) {
             // Page already erased
         } else if (memcmp(data, (void*)block_address, CONFIG_BLOCK_SIZE) == 0
-                   && check_erased(block_address + CONFIG_BLOCK_SIZE
-                                   , flash_page_size - CONFIG_BLOCK_SIZE)) {
+                   && flash_range_is_erased((void*)(block_address
+                                                    + CONFIG_BLOCK_SIZE)
+                                            , flash_page_size
+                                              - CONFIG_BLOCK_SIZE)) {
             // Retransmitted request - just ignore
             return 0;
         } else {
@@ -205,7 +197,7 @@ flash_write_block(uint32_t block_address, uint32_t *data)
         }
         page_write_count++;
     } else {
-        if (!check_erased(block_address, CONFIG_BLOCK_SIZE)) {
+        if (!flash_range_is_erased((void*)block_address, CONFIG_BLOCK_SIZE)) {
             if (memcmp(data, (void*)block_address, CONFIG_BLOCK_SIZE) == 0)
                 // Retransmitted request - just ignore
                 return 0;
