@@ -441,6 +441,12 @@ usb_init(void)
 
     // Reset usb controller and enable interrupts
     USB->CNTR = USB_CNTR_FRES;
+    if (CONFIG_MACH_STM32C5) {
+        // Transceiver start-up time (tSTARTUP) must elapse before reset is
+        // released (RM0522 47.5.2); the C5 datasheet gives no value, so
+        // 10us is a conservative margin over the 1us other STM32 parts give
+        udelay(10);
+    }
     USB->DADDR = 0;
     USB->CNTR = USB_CNTR_RESETM;
     USB->ISTR = 0;
