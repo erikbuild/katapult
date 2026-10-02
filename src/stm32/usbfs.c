@@ -30,17 +30,22 @@
   typedef volatile uint16_t epmword_t;
   #define WSIZE 2
   #define USBx_IRQn USB_LP_IRQn
-#elif CONFIG_MACH_STM32G0
+#elif CONFIG_MACH_STM32G0 || CONFIG_MACH_STM32C5
   // Transfer memory is accessed with 32bits and contains 32bits of data
   typedef volatile uint32_t epmword_t;
   #define WSIZE 4
   #define USBx_IRQn USB_IRQn
 #endif
 
-// The stm32g0 has slightly different register names
-#if CONFIG_MACH_STM32G0
+// The stm32g0 and stm32c5 have slightly different register names
+#if CONFIG_MACH_STM32G0 || CONFIG_MACH_STM32C5
   #if CONFIG_MACH_STM32G0B1
     #define USB_IRQn USB_UCPD1_2_IRQn
+  #elif CONFIG_MACH_STM32C5
+    #define USB_IRQn USB_DRD_FS_IRQn
+    #define USB_BASE USB_DRD_FS_BASE
+    #define USB_EP_VTRX USB_CHEP_VTRX
+    #define USB_EP_VTTX USB_CHEP_VTTX
   #endif
   #define USB USB_DRD_FS
   #define USB_PMAADDR USB_DRD_PMAADDR
@@ -131,6 +136,11 @@ btable_configure(void)
 static uint32_t
 btable_read_packet(int ep, int bufnum, uint8_t *dest, int max_len)
 {
+#if CONFIG_MACH_STM32C5
+    // Erratum ES0661 2.12.1: packet memory may lag the transfer-complete
+    // flag by up to 800ns on full speed OUT transfers
+    udelay(1);
+#endif
     epmword_t *src = EPM_EP_BUF(ep, bufnum);
     uint32_t count = epm_get_ep_count_rx(ep, bufnum);
     if (count > max_len)
