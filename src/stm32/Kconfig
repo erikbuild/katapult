@@ -511,6 +511,7 @@ config FLASH_START
 
 choice
     prompt "Application start offset"
+    default STM32_APP_START_2000 if MACH_STM32C5
     config STM32_APP_START_20000
         bool "128KiB offset" if MACH_STM32H7 && !MACH_STM32H750
     config STM32_APP_START_8000
